@@ -53,3 +53,4 @@ jobs:
     - name: Remove GitHub Actions Runner IP from EC2 Security Group
       run: |
         aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32    
+
