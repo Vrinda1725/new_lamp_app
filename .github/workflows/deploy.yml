@@ -13,13 +13,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Copy files to EC2
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-        EC2_IP: ${{ secrets.EC2_IP }}
+    - name: Set up SSH
       run: |
         mkdir -p ~/.ssh
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
+        ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
 
+    - name: Deploy to EC2
+      run: |
+        rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        EC2_IP: ${{ secrets.EC2_IP }}
