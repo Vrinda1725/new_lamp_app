@@ -46,23 +46,52 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
 
-    # - name: Copy files to EC2
-    #   run: |
-    #     mkdir -p ~/.ssh
-    #     echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    #     chmod 600 ~/.ssh/id_rsa
-    #     rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
+    - name: Copy files to EC2
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
 
-    # - name: Remove GitHub Actions Runner IP from EC2 Security Group
-    #   run: |
-    #     aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32   
+    - name: Remove GitHub Actions Runner IP from EC2 Security Group
+      run: |
+        aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32   
 
-    # - name: Refresh Auto Scaling Group Instances
-    #   run: |
-    #     INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-instances \
-    #       --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId" \
-    #       --output text)
+    - name: Refresh Auto Scaling Group Instances
+      run: |
+        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-instances \
+          --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId" \
+          --output text)
 
-    #     for INSTANCE in $INSTANCE_IDS; do
-    #       aws ec2 terminate-instances --instance-ids $INSTANCE
-    #     done    
+        for INSTANCE in $INSTANCE_IDS; do
+          aws ec2 terminate-instances --instance-ids $INSTANCE
+        done    
+
+    - name: Generate Load on Load Balancer
+      run: |
+        URL=$LOAD_BALANCER_URL
+        echo "Generating load on $URL"
+      
+        ab -n 10000 -c 1000 $URL
+
+    - name: Wait and Verify Autoscaling
+      run: |
+        echo "Waiting for autoscaling to stabilize..."
+        sleep 300 
+
+        # Verify instance count in ASG
+        INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+          --auto-scaling-group-names $ASG_NAME \
+          --query "AutoScalingGroups[0].Instances | length(@)" \
+          --output text)
+
+        echo "Number of instances in ASG: $INSTANCE_COUNT"
+
+        if [ "$INSTANCE_COUNT" -le 1 ]; then
+          echo "Autoscaling did not trigger as expected."
+          exit 1
+        else
+          echo "Autoscaling triggered successfully. Instances scaled up."
+        fi    
+
+
