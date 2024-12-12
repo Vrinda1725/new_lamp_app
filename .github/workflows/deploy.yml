@@ -46,23 +46,23 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
 
-    - name: Copy files to EC2
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
+    # - name: Copy files to EC2
+    #   run: |
+    #     mkdir -p ~/.ssh
+    #     echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    #     chmod 600 ~/.ssh/id_rsa
+    #     rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
 
-    - name: Remove GitHub Actions Runner IP from EC2 Security Group
-      run: |
-        aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32   
+    # - name: Remove GitHub Actions Runner IP from EC2 Security Group
+    #   run: |
+    #     aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32   
 
-    - name: Refresh Auto Scaling Group Instances
-      run: |
-        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-instances \
-          --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId" \
-          --output text)
+    # - name: Refresh Auto Scaling Group Instances
+    #   run: |
+    #     INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-instances \
+    #       --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId" \
+    #       --output text)
 
-        for INSTANCE in $INSTANCE_IDS; do
-          aws ec2 terminate-instances --instance-ids $INSTANCE
-        done    
+    #     for INSTANCE in $INSTANCE_IDS; do
+    #       aws ec2 terminate-instances --instance-ids $INSTANCE
+    #     done    
