@@ -77,7 +77,7 @@ jobs:
         URL=$LOAD_BALANCER_URL
         echo "Generating load on $URL"
       
-        ab -n 10000 -c 1000 $URL
+        ab -n 10000 -c 1000 -s 120 $URL
 
     - name: Wait and Verify Autoscaling
       run: |
