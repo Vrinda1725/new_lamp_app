@@ -39,13 +39,13 @@ jobs:
     #   run: |
     #     aws ec2 authorize-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32    
 
-    - name: Add EC2 host to known hosts
+    - name: Add EC2 DNS name to known hosts
       env:
-        EC2_IP: ${{ secrets.EC2_IP }}
+        LOAD_BALANCER_URL: ${{ secrets.LOAD_BALANCER_URL }}
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
-
+        ssh-keyscan -H $LOAD_BALANCER_URL >> ~/.ssh/known_hosts
+        
     # - name: Copy files to EC2
     #   run: |
     #     mkdir -p ~/.ssh
