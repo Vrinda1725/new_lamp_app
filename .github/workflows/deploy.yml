@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-      EC2_IP: ${{ secrets.EC2_IP }}
+      # SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+      # EC2_IP: ${{ secrets.EC2_IP }}
       EC2_SECURITY_GROUP_ID: ${{ secrets.EC2_SECURITY_GROUP_ID }}
       ASG_NAME: ${{ secrets.ASG_NAME }}
       LOAD_BALANCER_URL: ${{ secrets.LOAD_BALANCER_URL }}
@@ -35,9 +35,9 @@ jobs:
         echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
         echo "GitHub runner IP: $RUNNER_IP"    
 
-    - name: Add GitHub Actions Runner IP to EC2 Security Group
-      run: |
-        aws ec2 authorize-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32    
+    # - name: Add GitHub Actions Runner IP to EC2 Security Group
+    #   run: |
+    #     aws ec2 authorize-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32    
 
     - name: Add EC2 host to known hosts
       env:
@@ -46,16 +46,16 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
 
-    - name: Copy files to EC2
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
+    # - name: Copy files to EC2
+    #   run: |
+    #     mkdir -p ~/.ssh
+    #     echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    #     chmod 600 ~/.ssh/id_rsa
+    #     rsync -avz --exclude='.git' . ubuntu@$EC2_IP:/var/www/
 
-    - name: Remove GitHub Actions Runner IP from EC2 Security Group
-      run: |
-        aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32   
+    # - name: Remove GitHub Actions Runner IP from EC2 Security Group
+    #   run: |
+    #     aws ec2 revoke-security-group-ingress --group-id $EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32   
 
     - name: Refresh Auto Scaling Group Instances
       run: |
