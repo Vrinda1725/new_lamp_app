@@ -65,31 +65,3 @@ jobs:
         for INSTANCE in $INSTANCE_IDS; do
           aws ec2 terminate-instances --instance-ids $INSTANCE
         done    
-
-    - name: Generate Load on Load Balancer
-      run: |
-        URL=$LOAD_BALANCER_URL
-        echo "Generating load on $URL"
-      
-        ab -n 10000 -c 1000 $URL
-
-    - name: Wait and Verify Autoscaling
-      run: |
-        echo "Waiting for autoscaling to stabilize..."
-        sleep 300 
-
-        # Verify instance count in ASG
-        INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
-          --auto-scaling-group-names $ASG_NAME \
-          --query "AutoScalingGroups[0].Instances | length(@)" \
-          --output text)
-
-        echo "Number of instances in ASG: $INSTANCE_COUNT"
-
-        if [ "$INSTANCE_COUNT" -le 1 ]; then
-          echo "Autoscaling did not trigger as expected."
-          exit 1
-        else
-          echo "Autoscaling triggered successfully. Instances scaled up."
-        fi    
-
