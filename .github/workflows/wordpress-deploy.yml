@@ -2,7 +2,7 @@ name: Deploy WordPress to EC2
 
 on:
   workflow_call:
-    inputs:
+    secrets:
       ssh_private_key:
         required: true
         type: string
