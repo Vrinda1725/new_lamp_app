@@ -9,7 +9,7 @@ on:
       ec2_public_ip:
         required: true
         type: string
-      github_token:
+      pat:
         required: true
         type: string
 
