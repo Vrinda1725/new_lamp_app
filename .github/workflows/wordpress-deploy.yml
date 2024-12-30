@@ -5,13 +5,10 @@ on:
     secrets:
       ssh_private_key:
         required: true
-        type: string
       ec2_public_ip:
         required: true
-        type: string
       pat:
         required: true
-        type: string
 
 jobs:
   deploy:
