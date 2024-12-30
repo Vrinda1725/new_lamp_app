@@ -1,43 +1,58 @@
-name: WordPress Deployment to EC2
+name: Deploy WordPress to EC2
 
 on:
   workflow_call:
     inputs:
-      ec2_instance_ip:
-        description: 'The public IP address or DNS name of the EC2 instance'
+      ssh_private_key:
         required: true
         type: string
-      ssh_key:
-        description: 'SSH private key for accessing the EC2 instance'
+      ec2_public_ip:
         required: true
         type: string
-      target_path:
-        description: 'Path on the EC2 instance to deploy WordPress'
+      github_token:
         required: true
         type: string
+    secrets:
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Extract WordPress files
+      # Step 2: Set up SSH Key for EC2 access
+      - name: Set up SSH key
         run: |
-          tar -xzf latest.tar.gz -C wordpress/
-          echo "Extracted WordPress files to 'wordpress/' directory"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy to EC2 instance
-        env:
-          EC2_IP: ${{ inputs.ec2_instance_ip }}
-          TARGET_PATH: ${{ inputs.target_path }}
+      # Step 3: Install dependencies (scp, ssh)
+      - name: Install dependencies
         run: |
-          echo "${{ inputs.ssh_key }}" > deploy_key.pem
-          chmod 600 deploy_key.pem
-          # SCP to EC2 instance
-          scp -i deploy_key.pem -r wordpress/* ec2-user@${EC2_IP}:${TARGET_PATH}
-          # SSH to EC2 instance and set proper permissions
-          ssh -i deploy_key.pem ec2-user@${EC2_IP} "sudo chown apache:apache ${TARGET_PATH} && sudo chmod 755 ${TARGET_PATH}"
-          echo "Deployment completed successfully"
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+      # Step 4: Extract WordPress files from latest.tar.gz
+      - name: Extract WordPress
+        run: |
+          tar -xzvf latest.tar.gz
+
+      # Step 5: Copy WordPress files to EC2 instance
+      - name: Copy WordPress files to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r wordpress/* ec2-user@${{ secrets.EC2_PUBLIC_IP }}:/var/www/html/
+
+      # Step 6: Set correct permissions for WordPress files
+      - name: Set correct permissions
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "sudo chown -R apache:apache /var/www/html/"
+
+      # Step 7: Restart Apache service on EC2 to apply changes
+      - name: Restart Apache
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "sudo systemctl restart apache2"
