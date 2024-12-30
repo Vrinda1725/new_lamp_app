@@ -1,0 +1,43 @@
+name: WordPress Deployment to EC2
+
+on:
+  workflow_call:
+    inputs:
+      ec2_instance_ip:
+        description: 'The public IP address or DNS name of the EC2 instance'
+        required: true
+        type: string
+      ssh_key:
+        description: 'SSH private key for accessing the EC2 instance'
+        required: true
+        type: string
+      target_path:
+        description: 'Path on the EC2 instance to deploy WordPress'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Extract WordPress files
+        run: |
+          tar -xzf latest.tar.gz -C wordpress/
+          echo "Extracted WordPress files to 'wordpress/' directory"
+
+      - name: Deploy to EC2 instance
+        env:
+          EC2_IP: ${{ inputs.ec2_instance_ip }}
+          TARGET_PATH: ${{ inputs.target_path }}
+        run: |
+          echo "${{ inputs.ssh_key }}" > deploy_key.pem
+          chmod 600 deploy_key.pem
+          # SCP to EC2 instance
+          scp -i deploy_key.pem -r wordpress/* ec2-user@${EC2_IP}:${TARGET_PATH}
+          # SSH to EC2 instance and set proper permissions
+          ssh -i deploy_key.pem ec2-user@${EC2_IP} "sudo chown apache:apache ${TARGET_PATH} && sudo chmod 755 ${TARGET_PATH}"
+          echo "Deployment completed successfully"
