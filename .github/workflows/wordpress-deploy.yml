@@ -47,7 +47,7 @@ jobs:
       # Step 6: Set correct permissions for WordPress files
       - name: Set correct permissions
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "sudo chown -R apache:apache /var/www/html/"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "sudo chown apache:apache /var/www/html/"
 
       # Step 7: Restart Apache service on EC2 to apply changes
       - name: Restart Apache
