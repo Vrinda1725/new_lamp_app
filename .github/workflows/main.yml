@@ -1,0 +1,14 @@
+name: Deploy WordPress to EC2
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-wordpress:
+    uses: ./.github/workflows/wordpress-deploy.yml
+    with:
+      ec2_instance_ip: "13.60.49.145"  
+      ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      target_path: /var/www/html/wordpress
