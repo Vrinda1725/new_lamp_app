@@ -39,15 +39,15 @@ jobs:
       # Step 5: Copy WordPress files to EC2 instance
       - name: Copy WordPress files to EC2
         run: |
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r wordpress/* ec2-user@${{ secrets.EC2_PUBLIC_IP }}:/var/www/html/
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r wordpress/* ubuntu@${{ secrets.EC2_PUBLIC_IP }}:/var/www/html/
 
       # Step 6: Set correct permissions for WordPress files
       - name: Set correct permissions
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "sudo chown apache:apache /var/www/html/"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} "sudo chown apache:apache /var/www/html/"
 
       # Step 7: Restart Apache service on EC2 to apply changes
       - name: Restart Apache
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "sudo systemctl restart apache2"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} "sudo systemctl restart apache2"
 
