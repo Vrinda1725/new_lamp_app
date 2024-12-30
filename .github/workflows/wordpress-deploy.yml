@@ -12,10 +12,7 @@ on:
       github_token:
         required: true
         type: string
-    secrets:
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}
-
+ 
 jobs:
   deploy:
     runs-on: ubuntu-latest
