@@ -2,62 +2,48 @@ name: Deploy WordPress to EC2
 
 on:
   workflow_call:
-    secrets:
+    inputs:
+      runner:
+        required: true
+        type: string  # Accept the runner as a string input
       ssh_private_key:
         required: true
+        type: string
       ec2_public_ip:
         required: true
+        type: string
       pat:
         required: true
+        type: string
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}  # Dynamically use the runner input
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # # Step 2: Set up SSH Key for EC2 access
-      # - name: Set up SSH key
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-      #     chmod 600 ~/.ssh/id_rsa
-
-      # Step 3: Install dependencies (scp, ssh)
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
 
-      # # Step 4: Extract WordPress files from latest.tar.gz
-      # - name: Extract WordPress
-      #   run: |
-      #     tar -xzvf latest.tar.gz
-          
       - name: Add EC2 IP address to known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ inputs.ec2_public_ip }} >> ~/.ssh/known_hosts
 
-
-      # Step 5: Copy WordPress files to EC2 instance
       - name: Copy files to EC2
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ inputs.ssh_private_key }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          rsync -avz --exclude='.git' . ubuntu@${{ secrets.EC2_PUBLIC_IP }}:/var/www/
+          rsync -avz --exclude='.git' . ubuntu@${{ inputs.ec2_public_ip }}:/var/www/
 
-      # Step 6: Set correct permissions for WordPress files
       - name: Set correct permissions
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} "sudo chown ubuntu:ubuntu /var/www/"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ inputs.ec2_public_ip }} "sudo chown ubuntu:ubuntu /var/www/"
 
-      # Step 7: Restart Apache service on EC2 to apply changes
       - name: Restart Apache
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} "sudo systemctl restart apache2"
-
-
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ inputs.ec2_public_ip }} "sudo systemctl restart apache2"
