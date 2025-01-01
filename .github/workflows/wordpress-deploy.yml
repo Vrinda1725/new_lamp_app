@@ -2,20 +2,18 @@ name: Deploy WordPress to EC2
 
 on:
   workflow_call:
+    secrets:
+      ssh_private_key:
+        required: true
+      ec2_public_ip:
+        required: true
+      pat:
+        required: true
     inputs:
       runner:
         required: true
         type: string  # Accept the runner as a string input
-      ssh_private_key:
-        required: true
-        type: string
-      ec2_public_ip:
-        required: true
-        type: string
-      pat:
-        required: true
-        type: string
-
+     
 jobs:
   deploy:
     runs-on: ${{ inputs.runner }}  # Dynamically use the runner input
