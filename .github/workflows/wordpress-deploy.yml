@@ -26,11 +26,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sshpass
 
-      - name: Add EC2 IP address to known hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ inputs.ec2_public_ip }} >> ~/.ssh/known_hosts
-
       - name: Copy files to EC2
         run: |
           mkdir -p ~/.ssh
